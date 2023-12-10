@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pregnancy Notes - Sticky Notes</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- SweetAlert2 CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10.15.5/dist/sweetalert2.min.css">
+</head>
+<body>
+  <div class="container mt-5">
+    <h2>Pregnancy Notes - Sticky Notes</h2>
+    <div class="row">
+      <div class="col-md-6">
+        <!-- Input untuk menambahkan catatan -->
+        <form>
+          <div class="form-group">
+            <label for="name">NAMA/ NAME:</label>
+            <input type="text" id="name" class="form-control" placeholder="Masukkan nama...">
+          </div>
+          <div class="form-group">
+            <label for="dob">TGL LAHIR BLN THN/ DATE OF BIRTH MONTHS YEARS:</label>
+            <input type="date" id="dob" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="pregnancyCount">KEHAMILAN KEBERAPA? / HOW MANY PREGNANCY?</label>
+            <input type="number" id="pregnancyCount" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label for="gestationalAge">USIA KEHAMILAN?/ GESTATIONAL AGE?</label>
+            <input type="text" id="gestationalAge" class="form-control" placeholder="Contoh: 20 minggu">
+          </div>
+          <div class="form-group">
+            <textarea id="newNote" class="form-control" placeholder="Tambahkan catatan baru..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="noteDateTime">Tanggal dan Waktu disimpan</label>
+            <input type="datetime-local" id="noteDateTime" class="form-control" />
+          </div>
+          <button type="button" class="btn btn-primary" onclick="addNote()">Tambah Catatan</button>
+
+          <!-- Tombol Export dan Import -->
+          <div class="mt-3">
+            <button type="button" class="btn btn-success" onclick="exportData()">Export Data</button>
+            <label class="btn btn-info ml-2">
+              Import Data <input type="file" id="importFile" class="d-none" onchange="importData()">
+            </label>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="row mt-3" id="notesContainer">
+      <!-- Container untuk menampilkan catatan -->
+    </div>
+  </div>
+
+  <!-- JavaScript dan jQuery (wajib diletakkan sebelum penutup </body>) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10.15.5/dist/sweetalert2.all.min.js"></script>
+  <script>
+    // Fungsi untuk menambahkan catatan
+    function addNote() {
+      const name = document.getElementById("name").value;
+      const dob = document.getElementById("dob").value;
+      const pregnancyCount = document.getElementById("pregnancyCount").value;
+      const gestationalAge = document.getElementById("gestationalAge").value;
+      const newNoteText = document.getElementById("newNote").value;
+      const newNoteDateTime = document.getElementById("noteDateTime").value;
+
+      if (name.trim() !== '' && dob.trim() !== '' && pregnancyCount.trim() !== '' && gestationalAge.trim() !== '' && newNoteText.trim() !== '' && newNoteDateTime.trim() !== '') {
+        const noteObj = { name, dob, pregnancyCount, gestationalAge, text: newNoteText, datetime: newNoteDateTime };
+        notes.push(noteObj);
+        saveNotesToStorage();
+        updateNotesUI();
+        clearInputFields();
+      }
+    }
+
+    // Fungsi untuk memperbarui tampilan catatan
+    function updateNotesUI() {
+      const notesContainer = document.getElementById("notesContainer");
+      notesContainer.innerHTML = '';
+
+      for (let i = 0; i < notes.length; i++) {
+        const note = notes[i];
+        const noteCard = document.createElement("div");
+        noteCard.className = "card m-2";
+        noteCard.innerHTML = `
+          <div class="card-body">
+            <p class="card-text">NAMA: ${note.name}</p>
+            <p class="card-text">TGL LAHIR: ${note.dob}</p>
+            <p class="card-text">KEHAMILAN: ${note.pregnancyCount}</p>
+            <p class="card-text">USIA KEHAMILAN: ${note.gestationalAge}</p>
+            <p class="card-text">Catatan: ${note.text}</p>
+            <p class="card-text">Waktu dan Tanggal: ${note.datetime}</p>
+            <button type="button" class="btn btn-danger" onclick="deleteNote(${i})">Hapus</button>
+          </div>
+        `;
+        notesContainer.appendChild(noteCard);
+      }
+    }
+
+    // Fungsi untuk menghapus catatan
+    function deleteNote(index) {
+      notes.splice(index, 1);
+      saveNotesToStorage();
+      updateNotesUI();
+    }
+
+    // Fungsi untuk menyimpan catatan ke local storage
+    function saveNotesToStorage() {
+      localStorage.setItem("notes", JSON.stringify(notes));
+    }
+
+    // Fungsi untuk memuat catatan dari local storage saat halaman dimuat
+    function loadNotesFromStorage() {
+      const storedNotes = localStorage.getItem("notes");
+      if (storedNotes) {
+        notes = JSON.parse(storedNotes);
+      }
+    }
+
+    // Fungsi untuk membersihkan nilai input setelah menambahkan catatan
+    function clearInputFields() {
+      document.getElementById("name").value = '';
+      document.getElementById("dob").value = '';
+      document.getElementById("pregnancyCount").value = '';
+      document.getElementById("gestationalAge").value = '';
+      document.getElementById("newNote").value = '';
+      document.getElementById("noteDateTime").value = '';
+    }
+
+    // Fungsi untuk export data
+    function exportData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(notes));
+      const downloadAnchorNode = document.createElement("a");
+      downloadAnchorNode.setAttribute("href", dataStr);
+      downloadAnchorNode.setAttribute("download", "pregnancy_notes.json");
+      document.body.appendChild(downloadAnchorNode);
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
+    }
+
+    // Fungsi untuk import data
+    function importData() {
+      const importFile = document.getElementById("importFile");
+      const file = importFile.files[0];
+
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const importedData = JSON.parse(e.target.result);
+          notes = importedData;
+          saveNotesToStorage();
+          updateNotesUI();
+        };
+        reader.readAsText(file);
+        importFile.value = ''; // Reset input file setelah import
+      }
+    }
+
+    // Panggil fungsi updateNotesUI dan loadNotesFromStorage saat halaman pertama kali dimuat
+    let notes = [];
+    loadNotesFromStorage();
+    updateNotesUI();
+  </script>
+</body>
+</html>
